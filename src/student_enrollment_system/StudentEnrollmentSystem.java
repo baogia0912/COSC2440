@@ -300,7 +300,6 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
     public static void menu(StudentEnrollmentSystem SES) {
         System.out.println();
         System.out.println(ANSI_CYAN_BACKGROUND + ANSI_BLACK + "-~-~-~-~-~-~-~-~-~-Student Enrollment System-~-~-~-~-~-~-~-~-~-" + ANSI_RESET);
-        System.out.println();
         Scanner scanner = new Scanner(System.in);
         System.out.println("Do you wish to load your own CSV file?" + ANSI_BLUE + "(y/n)" + ANSI_RESET +
                             "\nElse a default file will be loaded.");
@@ -313,10 +312,10 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         }
         if (input.equalsIgnoreCase("y")) {
             String errorMessage = null;
-            label:
             while (!input.equals("4")) {
-                if (errorMessage != null) {
+                if (errorMessage != null){
                     System.out.println(errorMessage);
+                    errorMessage = null;
                 }
                 System.out.println("Uploading CSV..." + ANSI_BLUE +
                         "\n(1: Students CSV file, 2: Courses CSV file, 3: Enrollments CSV file)" + ANSI_YELLOW +
@@ -325,41 +324,35 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
                 input = scanner.nextLine();
 
                 switch (input) {
-                    case "1":
+                    case "1" -> {
                         System.out.println("Enter the path to your CSV file: ");
                         input = scanner.nextLine();
                         if (isValidPath(input) && input.endsWith(".csv")) {
                             readStudentsFromCSV(input, SES.studentList);
-                            errorMessage = null;
                         } else {
                             errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
                         }
-                        break;
-                    case "2":
+                    }
+                    case "2" -> {
                         System.out.println("Enter the path to your CSV file: ");
                         input = scanner.nextLine();
                         if (isValidPath(input) && input.endsWith(".csv")) {
                             readCoursesFromCSV(input, SES.courseList);
-                            errorMessage = null;
                         } else {
                             errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
                         }
-                        break;
-                    case "3":
+                    }
+                    case "3" -> {
                         System.out.println("Enter the path to your CSV file: ");
                         input = scanner.nextLine();
                         if (isValidPath(input) && input.endsWith(".csv")) {
                             readEnrollmentsFromCSV(input, SES.enrollmentList, SES.courseList, SES.studentList);
-                            errorMessage = null;
                         } else {
                             errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
                         }
-                        break;
-                    case "4":
-                        break label;
-                    default:
-                        errorMessage = ANSI_RED + "Input error! Please only enter '1', '2', '3' or '4'" + ANSI_RESET;
-                        break;
+                    }
+                    case "4" -> {}
+                    default -> errorMessage = ANSI_RED + "Input error! Please only enter '1', '2', '3' or '4'" + ANSI_RESET;
                 }
             }
 
@@ -367,13 +360,47 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
             readEnrollmentsFromCSV("src/student_enrollment_system/default.csv",
                     SES.enrollmentList, SES.courseList, SES.studentList);
         }
-        System.out.println();
-        System.out.println(ANSI_CYAN_BACKGROUND + ANSI_BLACK + "-~-~-~-~-~-~-~-~-~-Student Enrollment System-~-~-~-~-~-~-~-~-~-" + ANSI_RESET);
-        System.out.println();
-        printStudents(SES.studentList);
-        printCourses(SES.courseList);
-        printEnrollment(SES.enrollmentList);
+        input = "";
+        String errorMessage = null;
+        while (!input.equals("6")) {
+            System.out.println();
+            System.out.println(ANSI_CYAN_BACKGROUND + ANSI_BLACK + "-~-~-~-~-~-~-~-~-~-Student Enrollment System-~-~-~-~-~-~-~-~-~-" + ANSI_RESET);
+            if (errorMessage != null){
+                System.out.println(errorMessage);
+                errorMessage = null;
+            }
+            System.out.println("1: view data | 2: | 3: | 4: | 5: | 6: Exit");
+            input = scanner.nextLine();
+            switch (input) {
+                case "1" -> {
+                    while (!input.equals("4")) {
+                        if (errorMessage != null) {
+                            System.out.println(errorMessage);
+                            errorMessage = null;
+                        }
+                        System.out.println("1: View student list | 2: View course list | 3: View enrollment list | 4: Back");
+                        input = scanner.nextLine();
+                        switch (input) {
+                            case "1" -> printStudents(SES.studentList);
+                            case "2" -> printCourses(SES.courseList);
+                            case "3" -> printEnrollment(SES.enrollmentList);
+                            case "4" -> {}
+                            default -> errorMessage = ANSI_RED + "Input error! Please only enter '1', '2', '3', or '4'" + ANSI_RESET;
+                        }
+                    }
+                }
+                case "2" -> {}
 
+                case "3" -> {}
+
+                case "4" -> {}
+
+                case "5" -> {}
+
+                case "6" -> {}
+                default -> errorMessage = ANSI_RED + "Input error! Please only enter '1', '2', '3', '4', '5' or '6'" + ANSI_RESET;
+            }
+        }
     }
 
     public static void main (String[] args){
