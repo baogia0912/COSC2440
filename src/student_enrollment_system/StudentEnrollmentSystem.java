@@ -13,9 +13,9 @@ interface StudentEnrollmentManager{
 
     boolean add(StudentEnrollment SE);
     boolean update(StudentEnrollment oldEnrollment, StudentEnrollment newEnrollment);
-    boolean delete(Student student, Course course, String semester);
-    boolean getOne();
-    void getAll();
+    boolean delete(String studentID, String courseID, String semester);
+    StudentEnrollment getOne(String studentID, String courseID, String semester);
+    List<StudentEnrollment> getAll();
 }
 
 public class StudentEnrollmentSystem implements StudentEnrollmentManager {
@@ -66,7 +66,7 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         if (!Pattern.compile("[A-Z]{3,4}[0-9]{4}").matcher(attributes[0]).find()) return false;
 
         try {
-            int credit = Integer.parseInt(attributes[2]);
+            Integer.parseInt(attributes[2]);
         } catch (NumberFormatException e) {
             return false;
         }
@@ -77,21 +77,25 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
 
         if (!Pattern.compile("[0-9]{4}[A-C]").matcher(attributes[6]).find()) return false;
         if (!isValidStudentAttr(Arrays.copyOfRange(attributes, 0, 3))) return false;
-        if (!isValidCourseAttr(Arrays.copyOfRange(attributes, 3, 6))) return false;
-        return true;
+        return isValidCourseAttr(Arrays.copyOfRange(attributes, 3, 6));
     }
 
+    @Override
     public boolean add(StudentEnrollment SE) {
         return enrollmentList.add(SE);
     }
 
+    @Override
     public boolean update(StudentEnrollment oldEnrollment, StudentEnrollment newEnrollment) {
         return false;
     }
 
-    public boolean delete(Student student, Course course, String semester) {
+    @Override
+    public boolean delete(String studentID, String courseID, String semester) {
         for (StudentEnrollment SE : enrollmentList) {
-            if (SE.getStudent() == student && SE.getCourse() == course && SE.getSemester() == semester) {
+            if (SE.getStudent().getStudentID().equals(studentID) &&
+                    SE.getCourse().getCourseID().equals(courseID) && SE.getSemester().equals(semester)) {
+
                 enrollmentList.remove(SE);
                 System.out.println("Enrollment deleted successfully");
                 return true;
@@ -101,14 +105,21 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         return false;
     }
 
-    public boolean getOne() {
-        return false;
+    @Override
+    public StudentEnrollment getOne(String studentID, String courseID, String semester) {
+        for (StudentEnrollment SE : enrollmentList) {
+            if (SE.getStudent().getStudentID().equals(studentID) &&
+                    SE.getCourse().getCourseID().equals(courseID) && SE.getSemester().equals(semester)) {
+                return SE;
+            }
+        }
+        System.out.println("Enrollment not found!");
+        return null;
     }
 
-    public void getAll() {
-        for (StudentEnrollment i : enrollmentList) {
-            System.out.println(i);
-        }
+    @Override
+    public List<StudentEnrollment> getAll() {
+        return enrollmentList;
     }
 
     private static Student createStudent(String[] metadata, List<Student> studentList) {
@@ -213,8 +224,8 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         return SE;
     }
 
-    private static List<StudentEnrollment> readEnrollmentsFromCSV(String fileName,
-                  List<StudentEnrollment> enrollmentsList, List<Course> courseList, List<Student> studentList) {
+    private static void readEnrollmentsFromCSV(String fileName,
+                   List<StudentEnrollment> enrollmentsList, List<Course> courseList, List<Student> studentList) {
         Path pathToFile = Paths.get(fileName);
 
         try (BufferedReader br = Files.newBufferedReader(pathToFile, StandardCharsets.US_ASCII)) {
@@ -234,7 +245,56 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         } catch (IOException ioe) {
             ioe.printStackTrace();
         }
-        return enrollmentsList;
+    }
+
+    public static void printStudents(List<Student> studentList) {
+        System.out.println(ANSI_WHITE_BACKGROUND + ANSI_BLACK + "-~-~-~-~-~-~-~-~-~Student List~-~-~-~-~-~-~-~-~-" + ANSI_RESET);
+        System.out.println("|   " + ANSI_GREEN + "ID" + ANSI_RESET + "   |          " +
+                                    ANSI_YELLOW + "Name" + ANSI_RESET + "          |" +
+                                    ANSI_BLUE + "Date of birth" + ANSI_RESET + "|");
+        System.out.println("-------------------------------------------------");
+        for (Student student : studentList) {
+            System.out.printf("|%-17s|%-33s|%-22s|%n", ANSI_GREEN + student.getStudentID()  + ANSI_RESET,
+                            ANSI_YELLOW + student.getStudentName()  + ANSI_RESET,
+                            ANSI_BLUE + new SimpleDateFormat("dd/MM/yyyy").format(student.getBirthday()) + ANSI_RESET);
+        }
+        System.out.println("-------------------------------------------------");
+    }
+
+    public static void printCourses(List<Course> courseList) {
+        System.out.println(ANSI_WHITE_BACKGROUND + ANSI_BLACK + "-~-~-~-~-~-~-~-~-~-Course List-~-~-~-~-~-~-~-~-~-" + ANSI_RESET);
+        System.out.println("|   " + ANSI_GREEN + "ID" + ANSI_RESET + "   |             " +
+                ANSI_YELLOW + "Name" + ANSI_RESET + "             |" +
+                ANSI_BLUE + "Credit " + ANSI_RESET + "|");
+        System.out.println("-------------------------------------------------");
+        for (Course course : courseList) {
+            System.out.printf("|%-17s|%-39s|%-16s|%n", ANSI_GREEN + course.getCourseID()  + ANSI_RESET,
+                    ANSI_YELLOW + course.getCourseName()  + ANSI_RESET,
+                    ANSI_BLUE + course.getCredit() + ANSI_RESET);
+        }
+        System.out.println("-------------------------------------------------");
+    }
+
+    public static void printEnrollment(List<StudentEnrollment> enrollmentList) {
+        System.out.println(ANSI_WHITE_BACKGROUND + ANSI_BLACK + "-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-Enrollment List-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-" + ANSI_RESET);
+        System.out.println("|" + ANSI_GREEN + "Student ID" + ANSI_RESET + "|     " +
+                ANSI_YELLOW + "Student name" + ANSI_RESET + "     |" +
+                ANSI_BLUE + "Date of birth" + ANSI_RESET + "|" +
+                ANSI_CYAN + "Course ID" + ANSI_RESET + "|         " +
+                ANSI_PURPLE + "Course name" + ANSI_RESET + "         |" +
+                ANSI_RED + "Credit" + ANSI_RESET + "|" +
+                ANSI_WHITE + "Semester" + ANSI_RESET + "|");
+        System.out.println("---------------------------------------------------------------------------------------------------------");
+        for (StudentEnrollment SE : enrollmentList) {
+            System.out.printf("|%-19s|%-31s|%-22s|%-18s|%-38s|%-15s|%-17s|%n", ANSI_GREEN + SE.getStudent().getStudentID()  + ANSI_RESET,
+                    ANSI_YELLOW + SE.getStudent().getStudentName()  + ANSI_RESET,
+                    ANSI_BLUE + new SimpleDateFormat("dd/MM/yyyy").format(SE.getStudent().getBirthday()) + ANSI_RESET,
+                    ANSI_CYAN + SE.getCourse().getCourseID()  + ANSI_RESET,
+                    ANSI_PURPLE + SE.getCourse().getCourseName()  + ANSI_RESET,
+                    ANSI_RED + SE.getCourse().getCredit() + ANSI_RESET,
+                    ANSI_WHITE + SE.getSemester() + ANSI_RESET);
+        }
+        System.out.println("---------------------------------------------------------------------------------------------------------");
     }
 
     public static void menu(StudentEnrollmentSystem SES) {
@@ -304,20 +364,23 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
             }
 
         } else {
-            SES.enrollmentList = readEnrollmentsFromCSV("src/student_enrollment_system/default.csv",
+            readEnrollmentsFromCSV("src/student_enrollment_system/default.csv",
                     SES.enrollmentList, SES.courseList, SES.studentList);
         }
+        System.out.println();
+        System.out.println(ANSI_CYAN_BACKGROUND + ANSI_BLACK + "-~-~-~-~-~-~-~-~-~-Student Enrollment System-~-~-~-~-~-~-~-~-~-" + ANSI_RESET);
+        System.out.println();
+        printStudents(SES.studentList);
+        printCourses(SES.courseList);
+        printEnrollment(SES.enrollmentList);
 
-        System.out.println("Menu goes here");
     }
 
     public static void main (String[] args){
         StudentEnrollmentSystem SES = new StudentEnrollmentSystem();
         menu(SES);
-//        SES.getAll();
-//        for (Student student : SES.studentList) {
-//            System.out.println(student);
-//        }
+
+
     }
 
 }
