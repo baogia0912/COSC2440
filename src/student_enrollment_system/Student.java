@@ -21,15 +21,10 @@ public class Student {
         }
     }
 
-    public Student(String studentID, String studentName, String birthday) {
+    public Student(String studentID, String studentName, Date birthday) {
         this.studentID = studentID;
         this.studentName = studentName;
-        try {
-            this.birthday = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH).parse(birthday);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-
+        this.birthday = birthday;
     }
 
     public String getStudentName() {
@@ -46,8 +41,7 @@ public class Student {
 
     @Override
     public String toString() {
-        return "studentID='" + studentID + '\'' +
-                ", studentName='" + studentName + '\'' +
-                ", birthday='" + new SimpleDateFormat("dd/MM/yyyy").format(birthday) + '\'';
+        return studentID + " - " + studentName +
+                "(" + new SimpleDateFormat("dd/MM/yyyy").format(birthday) + ")";
     }
 }

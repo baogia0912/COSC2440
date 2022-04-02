@@ -18,12 +18,21 @@ public class StudentEnrollment {
         this.semester = semester;
     }
 
+    public Student getStudent() {
+        return student;
+    }
+
+    public Course getCourse() {
+        return course;
+    }
+
+    public String getSemester() {
+        return semester;
+    }
+
     @Override
     public String toString() {
-        return "StudentEnrollment{" +
-                "student=" + student +
-                ", course=" + course +
-                ", semester='" + semester + '\'' +
-                '}';
+        return student + " | " + course +
+                " | " + semester;
     }
 }
