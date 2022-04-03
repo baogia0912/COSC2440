@@ -15,7 +15,7 @@ public class Student {
         this.studentID = "s001";
         this.studentName = "Default";
         try {
-            this.birthday = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH).parse("1/1/2000");
+            this.birthday = new SimpleDateFormat("MM/dd/yyyy", Locale.ENGLISH).parse("1/1/2000");
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -42,6 +42,6 @@ public class Student {
     @Override
     public String toString() {
         return studentID + " - " + studentName +
-                "(" + new SimpleDateFormat("dd/MM/yyyy").format(birthday) + ")";
+                "(" + new SimpleDateFormat("MM/dd/yyyy").format(birthday) + ")";
     }
 }

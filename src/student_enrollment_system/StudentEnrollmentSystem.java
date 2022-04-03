@@ -1,7 +1,8 @@
 package student_enrollment_system;
 
-import java.io.BufferedReader;
-import java.io.IOException;
+import com.opencsv.CSVWriter;
+
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.text.ParseException;
@@ -13,7 +14,7 @@ interface StudentEnrollmentManager{
 
     boolean add(StudentEnrollment SE);
     boolean update(StudentEnrollment oldEnrollment, StudentEnrollment newEnrollment);
-    boolean delete(String studentID, String courseID, String semester);
+    boolean delete(StudentEnrollment SE);
     StudentEnrollment getOne(String studentID, String courseID, String semester);
     List<StudentEnrollment> getAll();
 }
@@ -42,28 +43,66 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
     List<Course> courseList = new ArrayList<Course>();
     List<Student> studentList = new ArrayList<Student>();
 
+    public static final String defaultDatabasePath = "src/student_enrollment_system/default.csv";
+    public static String databasePath = "src/student_enrollment_system/default.csv";
+
+    public static StudentEnrollment findEnrollment(List<StudentEnrollment> enrollmentList, String studentID, String courseID, String semester) {
+        for (StudentEnrollment SE : enrollmentList) {
+            if (SE.getCourse().getCourseID().equals(courseID) && SE.getStudent().getStudentID().equals(studentID)
+                    && SE.getSemester().equals(semester)) {
+                return SE;
+            }
+        }
+        return null;
+    }
+
+    public static Course findCourse(List<Course> courseList, String courseID) {
+        for (Course course : courseList) {
+            if (course.getCourseID().equals(courseID)) {
+                return course;
+            }
+        }
+        return null;
+    }
+
+    public static Student findStudent(List<Student> studentList, String studentID) {
+        for (Student student : studentList) {
+            if (student.getStudentID().equals(studentID)) {
+                return student;
+            }
+        }
+        return null;
+    }
+
     public static boolean isValidPath(String path) {
         try {
-            Paths.get(path);
-        } catch (InvalidPathException | NullPointerException ex) {
+            Files.newBufferedReader(Paths.get(path), StandardCharsets.US_ASCII);
+        } catch (Exception ex) {
             return false;
         }
         return true;
     }
 
+    public static boolean isValidStudentID(String studentID) {
+        return Pattern.compile("S[0-9]{6}", Pattern.CASE_INSENSITIVE).matcher(studentID).find();
+    }
+
     public static boolean isValidStudentAttr(String[] attributes) {
-        if (!Pattern.compile("S[0-9]{6}").matcher(attributes[0]).find()) return false;
+        if (!isValidStudentID(attributes[0])) return false;
 
         try {
-            new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH).parse(attributes[2]);
+            new SimpleDateFormat("MM/dd/yyyy", Locale.ENGLISH).parse(attributes[2]);
         } catch (ParseException e) {
             return false;
         }
         return true;
     }
+    public static boolean isValidCourseID(String courseID) {
+        return Pattern.compile("[A-Z]{3,4}[0-9]{4}", Pattern.CASE_INSENSITIVE).matcher(courseID).find();
+    }
 
     public static boolean isValidCourseAttr(String[] attributes) {
-        if (!Pattern.compile("[A-Z]{3,4}[0-9]{4}").matcher(attributes[0]).find()) return false;
+        if (!isValidCourseID(attributes[0])) return false;
 
         try {
             Integer.parseInt(attributes[2]);
@@ -72,17 +111,36 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         }
         return true;
     }
+    public static boolean isValidSemester(String semester) {
+        return Pattern.compile("[0-9]{4}[A-C]", Pattern.CASE_INSENSITIVE).matcher(semester).find();
+    }
 
     public static boolean isValidEnrollmentAttributes(String[] attributes) {
-
-        if (!Pattern.compile("[0-9]{4}[A-C]").matcher(attributes[6]).find()) return false;
+        if (!isValidSemester(attributes[6])) return false;
         if (!isValidStudentAttr(Arrays.copyOfRange(attributes, 0, 3))) return false;
         return isValidCourseAttr(Arrays.copyOfRange(attributes, 3, 6));
     }
 
     @Override
     public boolean add(StudentEnrollment SE) {
-        return enrollmentList.add(SE);
+        File file = new File(databasePath);
+        try {
+            PrintWriter outputFile = new PrintWriter(new FileOutputStream(file, true));
+
+            outputFile.printf("%s,%s,%s,%s,%s,%d,%s\n",
+                SE.getStudent().getStudentID(), SE.getStudent().getStudentName(),
+                new SimpleDateFormat("MM/dd/yyyy").format(SE.getStudent().getBirthday()),
+                SE.getCourse().getCourseID(), SE.getCourse().getCourseName(),
+                SE.getCourse().getCredit(), SE.getSemester()
+            );
+            outputFile.close();
+            enrollmentList.add(SE);
+            return true;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     @Override
@@ -91,18 +149,27 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
     }
 
     @Override
-    public boolean delete(String studentID, String courseID, String semester) {
-        for (StudentEnrollment SE : enrollmentList) {
-            if (SE.getStudent().getStudentID().equals(studentID) &&
-                    SE.getCourse().getCourseID().equals(courseID) && SE.getSemester().equals(semester)) {
+    public boolean delete(StudentEnrollment oldSE) {
+        File file = new File(databasePath);
+        try {
+            enrollmentList.remove(oldSE);
+            PrintWriter outputFile = new PrintWriter(file);
 
-                enrollmentList.remove(SE);
-                System.out.println("Enrollment deleted successfully");
-                return true;
+            for (StudentEnrollment SE : enrollmentList) {
+                outputFile.printf("%s,%s,%s,%s,%s,%d,%s\n",
+                        SE.getStudent().getStudentID(), SE.getStudent().getStudentName(),
+                        new SimpleDateFormat("MM/dd/yyyy").format(SE.getStudent().getBirthday()),
+                        SE.getCourse().getCourseID(), SE.getCourse().getCourseName(),
+                        SE.getCourse().getCredit(), SE.getSemester()
+                );
             }
+            outputFile.close();
+            return true;
         }
-        System.out.println("Enrollment not found!");
-        return false;
+        catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     @Override
@@ -127,20 +194,21 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         String studentName = metadata[1];
         Date birthday = null;
         try {
-            birthday = new SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH).parse(metadata[2]);
+            birthday = new SimpleDateFormat("MM/dd/yyyy", Locale.ENGLISH).parse(metadata[2]);
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        for (Student student : studentList) {
-            if (student.getStudentID().equals(studentID)) {
-                System.out.println(ANSI_GREEN + student.getStudentID()+ " - " + student.getStudentName() + ANSI_RESET
-                        + " already exist and will not be added");
-                return student;
-            }
+
+        Student student = findStudent(studentList, studentID);
+        if (student != null) {
+            System.out.println(ANSI_GREEN + student.getStudentID()+ " - " + student.getStudentName() + ANSI_RESET
+                    + " already exist and will not be added");
+            return student;
         }
-        Student student = new Student(studentID, studentName, birthday);
-        studentList.add(student);
-        return student;
+
+        Student newStudent = new Student(studentID, studentName, birthday);
+        studentList.add(newStudent);
+        return newStudent;
     }
 
     private static void readStudentsFromCSV(String fileName, List<Student> studentList) {
@@ -169,16 +237,17 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         String courseID = metadata[0];
         String courseName = metadata[1];
         int credit = Integer.parseInt(metadata[2]);
-        for (Course course : courseList) {
-            if (course.getCourseID().equals(courseID)) {
-                System.out.println(ANSI_GREEN + course.getCourseID()+ " - " + course.getCourseName() + ANSI_RESET
-                        + " already exist and will not be added");
-                return course;
-            }
+
+        Course course = findCourse(courseList, courseID);
+        if (course != null) {
+            System.out.println(ANSI_GREEN + course.getCourseID()+ " - " + course.getCourseName() + ANSI_RESET
+                    + " already exist and will not be added");
+            return course;
         }
-        Course course = new Course(courseID, courseName, credit);
-        courseList.add(course);
-        return course;
+
+        Course newCourse = new Course(courseID, courseName, credit);
+        courseList.add(newCourse);
+        return newCourse;
     }
 
     private static void readCoursesFromCSV(String fileName, List<Course> courseList) {
@@ -204,28 +273,26 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
     }
 
     private static StudentEnrollment createEnrollment(String[] metadata,
-                    List<StudentEnrollment> enrollmentsList, List<Course> courseList, List<Student> studentList) {
+                    List<StudentEnrollment> enrollmentList, List<Course> courseList, List<Student> studentList) {
         Student student = createStudent(Arrays.copyOfRange(metadata, 0, 3), studentList);
         Course course = createCourse(Arrays.copyOfRange(metadata, 3, 6), courseList);
         String studentID = metadata[0];
         String courseID = metadata[3];
         String semester = metadata[6];
 
-        for (StudentEnrollment SE : enrollmentsList) {
-            if (SE.getCourse().getCourseID().equals(courseID) && SE.getStudent().getStudentID().equals(studentID)
-                    && SE.getSemester().equals(semester)) {
-                System.out.println(ANSI_GREEN + SE + ANSI_RESET + " already exist and will not be added");
-                return SE;
-            }
+        StudentEnrollment SE = findEnrollment(enrollmentList, studentID, courseID, semester);
+        if (SE != null) {
+            System.out.println(ANSI_GREEN + SE + ANSI_RESET + " already exist and will not be added");
+            return SE;
         }
 
-        StudentEnrollment SE = new StudentEnrollment(student, course, semester);
-        enrollmentsList.add(SE);
-        return SE;
+        StudentEnrollment newSE = new StudentEnrollment(student, course, semester);
+        enrollmentList.add(newSE);
+        return newSE;
     }
 
     private static void readEnrollmentsFromCSV(String fileName,
-                   List<StudentEnrollment> enrollmentsList, List<Course> courseList, List<Student> studentList) {
+                   List<StudentEnrollment> enrollmentList, List<Course> courseList, List<Student> studentList) {
         Path pathToFile = Paths.get(fileName);
 
         try (BufferedReader br = Files.newBufferedReader(pathToFile, StandardCharsets.US_ASCII)) {
@@ -234,7 +301,7 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
             while (line != null) {
                 String[] attributes = line.split(",");
                 if (isValidEnrollmentAttributes(attributes) && attributes.length == 7) {
-                    createEnrollment(attributes, enrollmentsList, courseList, studentList);
+                    createEnrollment(attributes, enrollmentList, courseList, studentList);
                 } else {
                     System.out.println(ANSI_RED + "Unable to parse this line to the database: " + ANSI_YELLOW + line + ANSI_RESET);
                 }
@@ -256,7 +323,7 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         for (Student student : studentList) {
             System.out.printf("|%-17s|%-33s|%-22s|%n", ANSI_GREEN + student.getStudentID()  + ANSI_RESET,
                             ANSI_YELLOW + student.getStudentName()  + ANSI_RESET,
-                            ANSI_BLUE + new SimpleDateFormat("dd/MM/yyyy").format(student.getBirthday()) + ANSI_RESET);
+                            ANSI_BLUE + new SimpleDateFormat("MM/dd/yyyy").format(student.getBirthday()) + ANSI_RESET);
         }
         System.out.println("-------------------------------------------------");
     }
@@ -288,7 +355,7 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         for (StudentEnrollment SE : enrollmentList) {
             System.out.printf("|%-19s|%-31s|%-22s|%-18s|%-38s|%-15s|%-17s|%n", ANSI_GREEN + SE.getStudent().getStudentID()  + ANSI_RESET,
                     ANSI_YELLOW + SE.getStudent().getStudentName()  + ANSI_RESET,
-                    ANSI_BLUE + new SimpleDateFormat("dd/MM/yyyy").format(SE.getStudent().getBirthday()) + ANSI_RESET,
+                    ANSI_BLUE + new SimpleDateFormat("MM/dd/yyyy").format(SE.getStudent().getBirthday()) + ANSI_RESET,
                     ANSI_CYAN + SE.getCourse().getCourseID()  + ANSI_RESET,
                     ANSI_PURPLE + SE.getCourse().getCourseName()  + ANSI_RESET,
                     ANSI_RED + SE.getCourse().getCredit() + ANSI_RESET,
@@ -301,67 +368,99 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         System.out.println();
         System.out.println(ANSI_CYAN_BACKGROUND + ANSI_BLACK + "-~-~-~-~-~-~-~-~-~-Student Enrollment System-~-~-~-~-~-~-~-~-~-" + ANSI_RESET);
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Do you wish to load your own CSV file?" + ANSI_BLUE + "(y/n)" + ANSI_RESET +
-                            "\nElse a default file will be loaded.");
-        String input = scanner.nextLine();
+        String input = "";
+        String errorMessage = null;
         while (!Arrays.asList("y", "Y", "n", "N").contains(input)) {
-            System.out.println(ANSI_RED + "Input error! Please only enter 'y' or 'n'" + ANSI_RESET);
-            System.out.println("Do you wish to load your own CSV file?" + ANSI_BLUE + "(y/n)" + ANSI_RESET +
-                                "\nElse a default file will be loaded.");
+            if (errorMessage != null) {
+                System.out.println(errorMessage);
+                errorMessage = null;
+            }
+            System.out.println("Do you wish to load an use your own CSV file as enrollment database?" + ANSI_BLUE + "(y/n)" + ANSI_RESET +
+                                "\nElse a default CSV file will be loaded and use as enrollment database.");
             input = scanner.nextLine();
+            if (!Arrays.asList("y", "Y", "n", "N").contains(input)) {
+                errorMessage = ANSI_RED + "Input error! Please only enter 'y' or 'n'" + ANSI_RESET;
+            }
         }
         if (input.equalsIgnoreCase("y")) {
-            String errorMessage = null;
-            while (!input.equals("4")) {
-                if (errorMessage != null){
+            while (true) {
+                if (errorMessage != null) {
                     System.out.println(errorMessage);
                     errorMessage = null;
                 }
-                System.out.println("Uploading CSV..." + ANSI_BLUE +
-                        "\n(1: Students CSV file, 2: Courses CSV file, 3: Enrollments CSV file)" + ANSI_YELLOW +
-                        "\n4: cancel" + ANSI_RESET +
-                        "\nData type option: ");
+                System.out.println(ANSI_BLUE + "Enter your path: ");
                 input = scanner.nextLine();
+                if (isValidPath(input) && input.endsWith(".csv")) {
+                    readEnrollmentsFromCSV(input, SES.enrollmentList, SES.courseList, SES.studentList);
 
-                switch (input) {
-                    case "1" -> {
-                        System.out.println("Enter the path to your CSV file: ");
-                        input = scanner.nextLine();
-                        if (isValidPath(input) && input.endsWith(".csv")) {
-                            readStudentsFromCSV(input, SES.studentList);
-                        } else {
-                            errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
-                        }
-                    }
-                    case "2" -> {
-                        System.out.println("Enter the path to your CSV file: ");
-                        input = scanner.nextLine();
-                        if (isValidPath(input) && input.endsWith(".csv")) {
-                            readCoursesFromCSV(input, SES.courseList);
-                        } else {
-                            errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
-                        }
-                    }
-                    case "3" -> {
-                        System.out.println("Enter the path to your CSV file: ");
-                        input = scanner.nextLine();
-                        if (isValidPath(input) && input.endsWith(".csv")) {
-                            readEnrollmentsFromCSV(input, SES.enrollmentList, SES.courseList, SES.studentList);
-                        } else {
-                            errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
-                        }
-                    }
-                    case "4" -> {}
-                    default -> errorMessage = ANSI_RED + "Input error! Please only enter '1', '2', '3' or '4'" + ANSI_RESET;
+                    databasePath = input;
+                    break;
+                } else {
+                    errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
                 }
             }
+            while (!Arrays.asList("y", "Y", "n", "N").contains(input)) {
+                if (errorMessage != null) {
+                    System.out.println(errorMessage);
+                    errorMessage = null;
+                }
+                System.out.println("Do you wish to load more CSV file?" + ANSI_BLUE + "(y/n)" + ANSI_RESET);
+                input = scanner.nextLine();
+                if (!Arrays.asList("y", "Y", "n", "N").contains(input)) {
+                    errorMessage = ANSI_RED + "Input error! Please only enter 'y' or 'n'" + ANSI_RESET;
+                }
+            }
+            if (input.equalsIgnoreCase("y")) {
+                while (!input.equals("4")) {
+                    if (errorMessage != null) {
+                        System.out.println(errorMessage);
+                        errorMessage = null;
+                    }
+                    System.out.println("Uploading additional CSV file..." + ANSI_BLUE +
+                            "\n(1: Students CSV file, 2: Courses CSV file, 3: Enrollments CSV file)" + ANSI_YELLOW +
+                            "\n4: cancel" + ANSI_RESET +
+                            "\nData type option: ");
+                    input = scanner.nextLine();
 
+                    switch (input) {
+                        case "1" -> {
+                            System.out.println("Enter the path to your CSV file: ");
+                            input = scanner.nextLine();
+                            if (isValidPath(input) && input.endsWith(".csv")) {
+                                readStudentsFromCSV(input, SES.studentList);
+                            } else {
+                                errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
+                            }
+                        }
+                        case "2" -> {
+                            System.out.println("Enter the path to your CSV file: ");
+                            input = scanner.nextLine();
+                            if (isValidPath(input) && input.endsWith(".csv")) {
+                                readCoursesFromCSV(input, SES.courseList);
+                            } else {
+                                errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
+                            }
+                        }
+                        case "3" -> {
+                            System.out.println("Enter the path to your CSV file: ");
+                            input = scanner.nextLine();
+                            if (isValidPath(input) && input.endsWith(".csv")) {
+                                readEnrollmentsFromCSV(input, SES.enrollmentList, SES.courseList, SES.studentList);
+                            } else {
+                                errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
+                            }
+                        }
+                        case "4" -> {
+                        }
+                        default -> errorMessage = ANSI_RED + "Input error! Please only enter '1', '2', '3' or '4'" + ANSI_RESET;
+                    }
+                }
+            }
         } else {
-            readEnrollmentsFromCSV("src/student_enrollment_system/default.csv",
-                    SES.enrollmentList, SES.courseList, SES.studentList);
+            readEnrollmentsFromCSV(defaultDatabasePath, SES.enrollmentList, SES.courseList, SES.studentList);
+            databasePath = defaultDatabasePath;
         }
         input = "";
-        String errorMessage = null;
         while (!input.equals("6")) {
             System.out.println();
             System.out.println(ANSI_CYAN_BACKGROUND + ANSI_BLACK + "-~-~-~-~-~-~-~-~-~-Student Enrollment System-~-~-~-~-~-~-~-~-~-" + ANSI_RESET);
@@ -369,7 +468,8 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
                 System.out.println(errorMessage);
                 errorMessage = null;
             }
-            System.out.println("1: view data | 2: | 3: | 4: | 5: | 6: Exit");
+            System.out.println("1: View data | 2: Update an enrollment | 3: View student's courses" +
+                    "\n4: View course's students | 5: View courses in semester | 6: Exit");
             input = scanner.nextLine();
             switch (input) {
                 case "1" -> {
@@ -389,7 +489,78 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
                         }
                     }
                 }
-                case "2" -> {}
+                case "2" -> {
+                    while (!input.equals("4")) {
+                        if (errorMessage != null) {
+                            System.out.println(errorMessage);
+                            errorMessage = null;
+                        }
+                        System.out.println("1: Enroll a student | 2: Update an enrollment | 3: Delete an enrollment | 4: Back");
+                        input = scanner.nextLine();
+                        switch (input) {
+                            case "1" -> {
+                                System.out.println("Enter student ID: ");
+                                String studentID = scanner.nextLine();
+                                if (!isValidStudentID(studentID) || findStudent(SES.studentList, studentID) == null) {
+                                    errorMessage = ANSI_RED + "Invalid student ID" + ANSI_RESET;
+                                    break;
+                                }
+                                System.out.println("Enter course ID: ");
+                                String courseID = scanner.nextLine();
+                                if (!isValidCourseID(courseID) || findCourse(SES.courseList, courseID) == null) {
+                                    errorMessage = ANSI_RED + "Invalid course ID" + ANSI_RESET;
+                                    break;
+                                }
+                                System.out.println("Enter semester: ");
+                                String semester = scanner.nextLine();
+                                if (!isValidSemester(semester)) {
+                                    errorMessage = ANSI_RED + "Invalid semester" + ANSI_RESET;
+                                    break;
+                                }
+                                StudentEnrollment SE = findEnrollment(SES.enrollmentList, studentID, courseID, semester);
+                                if (SE != null) {
+                                    System.out.println(ANSI_GREEN + SE + ANSI_RESET + " already exist and will not be added");
+                                    break;
+                                }
+                                SE = new StudentEnrollment(findStudent(SES.studentList, studentID), findCourse(SES.courseList, courseID), semester);
+                                if (SES.add(SE)) System.out.println(ANSI_PURPLE + SE.getStudent().getStudentName() + " have been enrolled in " +
+                                        SE.getCourse().getCourseName() + " in semester " + SE.getSemester() + ANSI_RESET);
+                                else System.out.println(ANSI_RED + "Failed to enrolled student!" + ANSI_RESET);
+                            }
+                            case "2" -> {}
+                            case "3" -> {
+                                System.out.println("Enter student ID: ");
+                                String studentID = scanner.nextLine();
+                                if (!isValidStudentID(studentID) || findStudent(SES.studentList, studentID) == null) {
+                                    errorMessage = ANSI_RED + "Invalid student ID" + ANSI_RESET;
+                                    break;
+                                }
+
+                                System.out.println("Enter course ID: ");
+                                String courseID = scanner.nextLine();
+                                if (!isValidCourseID(courseID) || findCourse(SES.courseList, courseID) == null) {
+                                    errorMessage = ANSI_RED + "Invalid course ID" + ANSI_RESET;
+                                    break;
+                                }
+                                System.out.println("Enter semester: ");
+                                String semester = scanner.nextLine();
+                                if (!isValidSemester(semester)) {
+                                    errorMessage = ANSI_RED + "Invalid semester" + ANSI_RESET;
+                                    break;
+                                }
+                                StudentEnrollment SE = findEnrollment(SES.enrollmentList, studentID, courseID, semester);
+                                if (SE == null) {
+                                    System.out.println(ANSI_RED + "Enrollment does not exist!" + ANSI_RESET);
+                                    break;
+                                } else if (SES.delete(SE)) System.out.println(ANSI_PURPLE + SE.getStudent().getStudentName() + " have dropped " +
+                                            SE.getCourse().getCourseName() + " in semester " + SE.getSemester() + ANSI_RESET);
+                                else System.out.println(ANSI_RED + "Failed to drop the course" + ANSI_RESET);
+                            }
+                            case "4" -> {}
+                            default -> errorMessage = ANSI_RED + "Input error! Please only enter '1', '2', '3', or '4'" + ANSI_RESET;
+                        }
+                    }
+                }
 
                 case "3" -> {}
 
