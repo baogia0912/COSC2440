@@ -2,9 +2,9 @@ package student_enrollment_system;
 
 
 public class StudentEnrollment {
-    private Student student;
-    private Course course;
-    private String semester;
+    private final Student student;
+    private final Course course;
+    private final String semester;
 
     public StudentEnrollment() {
         this.student = new Student();

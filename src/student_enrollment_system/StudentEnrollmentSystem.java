@@ -1,7 +1,5 @@
 package student_enrollment_system;
 
-import com.opencsv.CSVWriter;
-
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -30,18 +28,12 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
     public static final String ANSI_CYAN = "\u001B[36m";
     public static final String ANSI_WHITE = "\u001B[37m";
 
-    public static final String ANSI_BLACK_BACKGROUND = "\u001B[40m";
-    public static final String ANSI_RED_BACKGROUND = "\u001B[41m";
-    public static final String ANSI_GREEN_BACKGROUND = "\u001B[42m";
-    public static final String ANSI_YELLOW_BACKGROUND = "\u001B[43m";
-    public static final String ANSI_BLUE_BACKGROUND = "\u001B[44m";
-    public static final String ANSI_PURPLE_BACKGROUND = "\u001B[45m";
     public static final String ANSI_CYAN_BACKGROUND = "\u001B[46m";
     public static final String ANSI_WHITE_BACKGROUND = "\u001B[47m";
 
-    List<StudentEnrollment> enrollmentList = new ArrayList<StudentEnrollment>();
-    List<Course> courseList = new ArrayList<Course>();
-    List<Student> studentList = new ArrayList<Student>();
+    List<StudentEnrollment> enrollmentList = new ArrayList<>();
+    List<Course> courseList = new ArrayList<>();
+    List<Student> studentList = new ArrayList<>();
 
     public static final String defaultDatabasePath = "src/student_enrollment_system/default.csv";
     public static String databasePath = "src/student_enrollment_system/default.csv";
@@ -152,30 +144,6 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         }
     }
 
-    public static void saveEnrollmentsToCSV(List<StudentEnrollment> enrollmentList) {
-        File file = new File("saved student list.csv");
-        try {
-            if (file.createNewFile()) {
-                System.out.println(ANSI_PURPLE + "File created: " + file.getName() + ANSI_RESET);
-            } else {
-                System.out.println(ANSI_RED + "File already exists." + ANSI_RESET);
-                return;
-            }
-            PrintWriter outputFile = new PrintWriter(file);
-            for (StudentEnrollment SE : enrollmentList) {
-                outputFile.printf("%s,%s,%s,%s,%s,%d,%s\n",
-                        SE.getStudent().getStudentID(), SE.getStudent().getStudentName(),
-                        new SimpleDateFormat("MM/dd/yyyy").format(SE.getStudent().getBirthday()),
-                        SE.getCourse().getCourseID(), SE.getCourse().getCourseName(),
-                        SE.getCourse().getCredit(), SE.getSemester()
-                );
-            }
-            outputFile.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     public static StudentEnrollment findEnrollment(List<StudentEnrollment> enrollmentList, String studentID, String courseID, String semester) {
         for (StudentEnrollment SE : enrollmentList) {
             if (SE.getCourse().getCourseID().equalsIgnoreCase(courseID) && SE.getStudent().getStudentID().equalsIgnoreCase(studentID)
@@ -214,7 +182,7 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
     }
 
     public static boolean isValidStudentID(String studentID) {
-        return Pattern.compile("S[0-9]{6}", Pattern.CASE_INSENSITIVE).matcher(studentID).find();
+        return Pattern.compile("^S[0-9]{6,7}$", Pattern.CASE_INSENSITIVE).matcher(studentID).find();
     }
 
     public static boolean isValidStudentAttr(String[] attributes) {
@@ -228,7 +196,7 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         return true;
     }
     public static boolean isValidCourseID(String courseID) {
-        return Pattern.compile("[A-Z]{3,4}[0-9]{4}", Pattern.CASE_INSENSITIVE).matcher(courseID).find();
+        return Pattern.compile("^[A-Z]{3,4}[0-9]{4}$", Pattern.CASE_INSENSITIVE).matcher(courseID).find();
     }
 
     public static boolean isValidCourseAttr(String[] attributes) {
@@ -242,7 +210,7 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         return true;
     }
     public static boolean isValidSemester(String semester) {
-        return Pattern.compile("[0-9]{4}[A-C]", Pattern.CASE_INSENSITIVE).matcher(semester).find();
+        return Pattern.compile("^[0-9]{4}[A-C]$", Pattern.CASE_INSENSITIVE).matcher(semester).find();
     }
 
     public static boolean isValidEnrollmentAttributes(String[] attributes) {
@@ -252,7 +220,7 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
     }
 
     public static List<Course> findCoursesOfStudent(List<StudentEnrollment> enrollmentList, String studentID, String semester) {
-        List<Course> queryList = new ArrayList<Course>();
+        List<Course> queryList = new ArrayList<>();
         for (StudentEnrollment SE : enrollmentList) {
             if (SE.getStudent().getStudentID().equalsIgnoreCase(studentID) && SE.getSemester().equalsIgnoreCase(semester)
                     && !queryList.contains(SE.getCourse())) {
@@ -263,7 +231,7 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
     }
 
     public static List<Student> findStudentsOfCourse(List<StudentEnrollment> enrollmentList, String courseId, String semester) {
-        List<Student> queryList = new ArrayList<Student>();
+        List<Student> queryList = new ArrayList<>();
         for (StudentEnrollment SE : enrollmentList) {
             if (SE.getCourse().getCourseID().equalsIgnoreCase(courseId) && SE.getSemester().equalsIgnoreCase(semester)
                     && !queryList.contains(SE.getStudent())) {
@@ -274,7 +242,7 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
     }
 
     public static List<StudentEnrollment> findEnrollmentsOfStudent(List<StudentEnrollment> enrollmentList, String studentID) {
-        List<StudentEnrollment> queryList = new ArrayList<StudentEnrollment>();
+        List<StudentEnrollment> queryList = new ArrayList<>();
         for (StudentEnrollment SE : enrollmentList) {
             if (SE.getStudent().getStudentID().equalsIgnoreCase(studentID)) {
                 queryList.add(SE);
@@ -284,7 +252,7 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
     }
 
     public static List<Course> findCourseInSemester(List<StudentEnrollment> enrollmentList, String semester) {
-        List<Course> queryList = new ArrayList<Course>();
+        List<Course> queryList = new ArrayList<>();
         for (StudentEnrollment SE : enrollmentList) {
             if (SE.getSemester().equalsIgnoreCase(semester) && !queryList.contains(SE.getCourse())) {
                 queryList.add(SE.getCourse());
@@ -376,8 +344,8 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         }
     }
 
-    private static StudentEnrollment createEnrollment(String[] metadata,
-                    List<StudentEnrollment> enrollmentList, List<Course> courseList, List<Student> studentList) {
+    private static void createEnrollment(String[] metadata,
+                                         List<StudentEnrollment> enrollmentList, List<Course> courseList, List<Student> studentList) {
         Student student = createStudent(Arrays.copyOfRange(metadata, 0, 3), studentList);
         Course course = createCourse(Arrays.copyOfRange(metadata, 3, 6), courseList);
         String studentID = metadata[0];
@@ -387,12 +355,11 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         StudentEnrollment SE = findEnrollment(enrollmentList, studentID, courseID, semester);
         if (SE != null) {
             System.out.println(ANSI_GREEN + SE + ANSI_RESET + " already exist and will not be added");
-            return SE;
+            return;
         }
 
         StudentEnrollment newSE = new StudentEnrollment(student, course, semester);
         enrollmentList.add(newSE);
-        return newSE;
     }
 
     private static void readEnrollmentsFromCSV(String fileName,
@@ -594,6 +561,8 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
                     }
                 }
                 case "2" -> {
+                    // place holder since update is not required to be implemented
+                    SES.update(new StudentEnrollment(), new StudentEnrollment());
                     System.out.println("Enter student ID: ");
                     String studentID = scanner.nextLine();
                     if (!isValidStudentID(studentID) || findStudent(SES.studentList, studentID) == null) {

@@ -7,8 +7,8 @@ import java.util.Locale;
 
 public class Student {
 
-    private String studentName;
-    private String studentID;
+    private final String studentName;
+    private final String studentID;
     private Date birthday;
 
     public Student() {

@@ -1,12 +1,10 @@
 package student_enrollment_system;
 
-import java.util.ArrayList;
-
 public class Course {
 
-    private String courseName;
-    private String courseID;
-    private int credit;
+    private final String courseName;
+    private final String courseID;
+    private final int credit;
 
     public Course() {
         this.courseID = "c001";
