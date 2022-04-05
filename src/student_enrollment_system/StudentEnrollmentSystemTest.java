@@ -70,6 +70,26 @@ class StudentEnrollmentSystemTest {
 
     @Test
     void update() {
+        SES.add(testSE);
+        Course newCourse = new Course("COSC1234", "fake course", 4);
+        SES.update(testSE, new StudentEnrollment(testStudent, newCourse, "2022B"));
+
+        Assertions.assertEquals(1, SES.enrollmentList.size());
+        Assertions.assertFalse(SES.getAll().isEmpty());
+        try (BufferedReader br = Files.newBufferedReader(pathToFile, StandardCharsets.US_ASCII)) {
+
+            String line = br.readLine();
+            Integer fileSize = 0;
+            while (line != null) {
+                Assertions.assertEquals("S3805912,test student,09/11/1999,COSC1234,fake course,4,2022B", line);
+                fileSize++;
+                line = br.readLine();
+            }
+            Assertions.assertEquals(1, fileSize);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
