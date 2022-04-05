@@ -36,8 +36,8 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
     List<Course> courseList = new ArrayList<>();
     List<Student> studentList = new ArrayList<>();
 
-    public static final String defaultDatabasePath = "src/student_enrollment_system/default.csv";
-    public static String databasePath = "src/student_enrollment_system/default.csv";
+    public static final String defaultDatabasePath = "src/student_enrollment_system/csvFiles/default.csv";
+    public static String databasePath = "src/student_enrollment_system/csvFiles/default.csv";
 
     @Override
     public boolean add(StudentEnrollment SE) {
@@ -127,7 +127,7 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
     }
 
     public static void saveCoursesToCSV(List<Course> courseList) {
-        File file = new File("saved course list.csv");
+        File file = new File("src/student_enrollment_system/csvFiles/saved course list.csv");
         try {
             if (file.createNewFile()) {
                 System.out.println(ANSI_PURPLE + "File created: " + file.getName() + ANSI_RESET);
@@ -146,7 +146,7 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
     }
 
     public static void saveStudentsToCSV(List<Student> studentList) {
-        File file = new File("saved student list.csv");
+        File file = new File("src/student_enrollment_system/csvFiles/saved student list.csv");
         try {
             if (file.createNewFile()) {
                 System.out.println(ANSI_PURPLE + "File created: " + file.getName() + ANSI_RESET);

@@ -26,7 +26,7 @@ class StudentEnrollmentSystemTest {
 
     @BeforeAll
     public static void setupAll() {
-        pathToFile = Paths.get("src/student_enrollment_system/TestingDatabase.csv");
+        pathToFile = Paths.get("src/student_enrollment_system/csvFiles/TestingDatabase.csv");
         file = new File(pathToFile.toString());
         StudentEnrollmentSystem.databasePath = pathToFile.toString();
 
