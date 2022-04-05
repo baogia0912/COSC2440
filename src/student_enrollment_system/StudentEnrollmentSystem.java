@@ -447,89 +447,83 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
                 errorMessage = null;
             }
             System.out.println("Do you wish to load an use your own CSV file as enrollment database?" + ANSI_BLUE + "(y/n)" + ANSI_RESET +
-                                "\nElse a default CSV file will be loaded and use as enrollment database.");
+                    "\nElse a default CSV file will be loaded and use as enrollment database.");
             input = scanner.nextLine();
             if (!Arrays.asList("y", "Y", "n", "N").contains(input)) {
                 errorMessage = ANSI_RED + "Input error! Please only enter 'y' or 'n'" + ANSI_RESET;
             }
-        }
-        if (input.equalsIgnoreCase("y")) {
-            while (true) {
-                if (errorMessage != null) {
-                    System.out.println(errorMessage);
-                    errorMessage = null;
-                }
+            if (input.equalsIgnoreCase("y")) {
                 System.out.println(ANSI_BLUE + "Enter your path: ");
                 input = scanner.nextLine();
                 if (isValidPath(input) && input.endsWith(".csv")) {
                     readEnrollmentsFromCSV(input, SES.enrollmentList, SES.courseList, SES.studentList);
-
                     databasePath = input;
+                    while (!Arrays.asList("y", "Y", "n", "N").contains(input)) {
+                        if (errorMessage != null) {
+                            System.out.println(errorMessage);
+                            errorMessage = null;
+                        }
+                        System.out.println("Do you wish to load more CSV file?" + ANSI_BLUE + "(y/n)" + ANSI_RESET);
+                        input = scanner.nextLine();
+                        if (!Arrays.asList("y", "Y", "n", "N").contains(input)) {
+                            errorMessage = ANSI_RED + "Input error! Please only enter 'y' or 'n'" + ANSI_RESET;
+                        }
+                        if (input.equalsIgnoreCase("y")) {
+                            while (!input.equalsIgnoreCase("4")) {
+                                if (errorMessage != null) {
+                                    System.out.println(errorMessage);
+                                    errorMessage = null;
+                                }
+                                System.out.println("Uploading additional CSV file..." + ANSI_BLUE +
+                                        "\n(1: Students CSV file, 2: Courses CSV file, 3: Enrollments CSV file)" + ANSI_YELLOW +
+                                        "\n4: cancel" + ANSI_RESET +
+                                        "\nData type option: ");
+                                input = scanner.nextLine();
+
+                                switch (input) {
+                                    case "1" -> {
+                                        System.out.println("Enter the path to your CSV file: ");
+                                        input = scanner.nextLine();
+                                        if (isValidPath(input) && input.endsWith(".csv")) {
+                                            readStudentsFromCSV(input, SES.studentList);
+                                        } else {
+                                            errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
+                                        }
+                                    }
+                                    case "2" -> {
+                                        System.out.println("Enter the path to your CSV file: ");
+                                        input = scanner.nextLine();
+                                        if (isValidPath(input) && input.endsWith(".csv")) {
+                                            readCoursesFromCSV(input, SES.courseList);
+                                        } else {
+                                            errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
+                                        }
+                                    }
+                                    case "3" -> {
+                                        System.out.println("Enter the path to your CSV file: ");
+                                        input = scanner.nextLine();
+                                        if (isValidPath(input) && input.endsWith(".csv")) {
+                                            readEnrollmentsFromCSV(input, SES.enrollmentList, SES.courseList, SES.studentList);
+                                        } else {
+                                            errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
+                                        }
+                                    }
+                                    case "4" -> {
+                                    }
+                                    default -> errorMessage = ANSI_RED + "Input error! Please only enter '1', '2', '3' or '4'" + ANSI_RESET;
+                                }
+                            }
+                        }
+                    }
                     break;
                 } else {
                     errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
                 }
+            } else if (input.equalsIgnoreCase("n")) {
+                readEnrollmentsFromCSV(defaultDatabasePath, SES.enrollmentList, SES.courseList, SES.studentList);
+                databasePath = defaultDatabasePath;
             }
-            while (!Arrays.asList("y", "Y", "n", "N").contains(input)) {
-                if (errorMessage != null) {
-                    System.out.println(errorMessage);
-                    errorMessage = null;
-                }
-                System.out.println("Do you wish to load more CSV file?" + ANSI_BLUE + "(y/n)" + ANSI_RESET);
-                input = scanner.nextLine();
-                if (!Arrays.asList("y", "Y", "n", "N").contains(input)) {
-                    errorMessage = ANSI_RED + "Input error! Please only enter 'y' or 'n'" + ANSI_RESET;
-                }
-            }
-            if (input.equalsIgnoreCase("y")) {
-                while (!input.equalsIgnoreCase("4")) {
-                    if (errorMessage != null) {
-                        System.out.println(errorMessage);
-                        errorMessage = null;
-                    }
-                    System.out.println("Uploading additional CSV file..." + ANSI_BLUE +
-                            "\n(1: Students CSV file, 2: Courses CSV file, 3: Enrollments CSV file)" + ANSI_YELLOW +
-                            "\n4: cancel" + ANSI_RESET +
-                            "\nData type option: ");
-                    input = scanner.nextLine();
-
-                    switch (input) {
-                        case "1" -> {
-                            System.out.println("Enter the path to your CSV file: ");
-                            input = scanner.nextLine();
-                            if (isValidPath(input) && input.endsWith(".csv")) {
-                                readStudentsFromCSV(input, SES.studentList);
-                            } else {
-                                errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
-                            }
-                        }
-                        case "2" -> {
-                            System.out.println("Enter the path to your CSV file: ");
-                            input = scanner.nextLine();
-                            if (isValidPath(input) && input.endsWith(".csv")) {
-                                readCoursesFromCSV(input, SES.courseList);
-                            } else {
-                                errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
-                            }
-                        }
-                        case "3" -> {
-                            System.out.println("Enter the path to your CSV file: ");
-                            input = scanner.nextLine();
-                            if (isValidPath(input) && input.endsWith(".csv")) {
-                                readEnrollmentsFromCSV(input, SES.enrollmentList, SES.courseList, SES.studentList);
-                            } else {
-                                errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
-                            }
-                        }
-                        case "4" -> {
-                        }
-                        default -> errorMessage = ANSI_RED + "Input error! Please only enter '1', '2', '3' or '4'" + ANSI_RESET;
-                    }
-                }
-            }
-        } else {
-            readEnrollmentsFromCSV(defaultDatabasePath, SES.enrollmentList, SES.courseList, SES.studentList);
-            databasePath = defaultDatabasePath;
+            if (input.equals("4")) break;
         }
         input = "";
         while (!input.equalsIgnoreCase("6")) {
