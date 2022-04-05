@@ -1,6 +1,7 @@
 package student_enrollment_system;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.text.ParseException;
@@ -62,7 +63,27 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
 
     @Override
     public boolean update(StudentEnrollment oldEnrollment, StudentEnrollment newEnrollment) {
-        return false;
+        File file = new File(databasePath);
+        try {
+            enrollmentList.remove(oldEnrollment);
+            enrollmentList.add(newEnrollment);
+            PrintWriter outputFile = new PrintWriter(file);
+
+            for (StudentEnrollment SE : enrollmentList) {
+                outputFile.printf("%s,%s,%s,%s,%s,%d,%s\n",
+                        SE.getStudent().getStudentID(), SE.getStudent().getStudentName(),
+                        new SimpleDateFormat("MM/dd/yyyy").format(SE.getStudent().getBirthday()),
+                        SE.getCourse().getCourseID(), SE.getCourse().getCourseName(),
+                        SE.getCourse().getCredit(), SE.getSemester()
+                );
+            }
+            outputFile.close();
+            return true;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     @Override
@@ -257,6 +278,31 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
             if (SE.getSemester().equalsIgnoreCase(semester) && !queryList.contains(SE.getCourse())) {
                 queryList.add(SE.getCourse());
             }
+        }
+        return queryList;
+    }
+
+    public static List<Course> findCourseOfStudentInSemester(List<StudentEnrollment> enrollmentList, String studentID, String semester) {
+        List<Course> queryList = new ArrayList<>();
+        for (StudentEnrollment SE : enrollmentList) {
+            if (SE.getStudent().getStudentID().equalsIgnoreCase(studentID) && SE.getSemester().equalsIgnoreCase(semester)) {
+                queryList.add(SE.getCourse());
+            }
+        }
+        return queryList;
+    }
+
+    public static List<Course> findCoursesDifferences(List<Course> list1, List<Course> list2) {
+        List<Course> queryList = new ArrayList<>();
+        for (Course course2 : list2) {
+            boolean add = true;
+            for (Course course1 : list1) {
+                if (course1.equals(course2)) {
+                    add = false;
+                    break;
+                }
+            }
+            if (add) queryList.add(course2);
         }
         return queryList;
     }
@@ -555,8 +601,6 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
                     }
                 }
                 case "2" -> {
-                    // place holder since update is not required to be implemented
-                    SES.update(new StudentEnrollment(), new StudentEnrollment());
                     System.out.println("Enter student ID: ");
                     String studentID = scanner.nextLine();
                     if (!isValidStudentID(studentID) || findStudent(SES.studentList, studentID) == null) {
@@ -569,7 +613,7 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
                             }
                             System.out.println(ANSI_GREEN + "These are this student's enrollments" + ANSI_RESET);
                             printEnrollment(findEnrollmentsOfStudent(SES.enrollmentList, studentID));
-                            System.out.println("1: Enroll a course | 2: Drop a course | 3: Back");
+                            System.out.println("1: Enroll a course | 2: Drop a course | 3: Update a course | 4: Back");
                             input = scanner.nextLine();
                             switch (input) {
                                 case "1" -> {
@@ -619,7 +663,45 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
                                                 SE.getCourse().getCourseName() + " in semester " + SE.getSemester() + ANSI_RESET);
                                     else System.out.println(ANSI_RED + "Failed to drop the course" + ANSI_RESET);
                                 }
-                                case "3" -> {}
+                                case "3" -> {
+                                    System.out.println("Enter semester you want to update: ");
+                                    String semester = scanner.nextLine();
+                                    if (!isValidSemester(semester)) {
+                                        errorMessage = ANSI_RED + "Invalid semester" + ANSI_RESET;
+                                        break;
+                                    }
+                                    List<Course> courseAvailableForUpdate = findCourseOfStudentInSemester(SES.enrollmentList, studentID, semester);
+                                    if (courseAvailableForUpdate.isEmpty()) {
+                                        System.out.println(ANSI_RED + "Student does not have any course in semester " + semester + ANSI_RESET);
+                                    } else {
+                                        printCourses(courseAvailableForUpdate);
+                                        System.out.println("Enter course you want to change: ");
+                                        String courseID = scanner.nextLine();
+                                        Course oldCourse = findCourse(SES.courseList, courseID);
+                                        if (!isValidCourseID(courseID) || !courseAvailableForUpdate.contains(oldCourse) || oldCourse == null) {
+                                            errorMessage = ANSI_RED + "Invalid course ID" + ANSI_RESET;
+                                            break;
+                                        }
+                                        courseAvailableForUpdate = findCoursesDifferences(courseAvailableForUpdate, SES.courseList);
+                                        System.out.println("These are the courses available for enrollment");
+                                        printCourses(courseAvailableForUpdate);
+                                        System.out.println("Enter course you want to change to: ");
+                                        courseID = scanner.nextLine();
+                                        Course newCourse = findCourse(SES.courseList, courseID);
+                                        if (!isValidCourseID(courseID) || !courseAvailableForUpdate.contains(newCourse) || newCourse == null) {
+                                            errorMessage = ANSI_RED + "Invalid course ID" + ANSI_RESET;
+                                            break;
+                                        }
+                                        StudentEnrollment oldEnrollment = findEnrollment(SES.enrollmentList, studentID, oldCourse.getCourseID(),semester);
+                                        StudentEnrollment newEnrollment = new StudentEnrollment(findStudent(SES.studentList, studentID), newCourse, semester);
+                                        if (SES.update(oldEnrollment, newEnrollment)) {
+                                            System.out.println(ANSI_PURPLE + oldEnrollment + " have been update to " + newEnrollment + ANSI_RESET);
+                                        } else {
+                                            System.out.println(ANSI_RED + "Failed to update enrollment!" + ANSI_RESET);
+                                        }
+                                    }
+                                }
+                                case "4" -> {}
                                 default -> errorMessage = ANSI_RED + "Input error! Please only enter '1', '2', or '3'" + ANSI_RESET;
                             }
                         }
