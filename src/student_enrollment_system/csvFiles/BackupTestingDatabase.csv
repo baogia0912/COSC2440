@@ -1,0 +1,15 @@
+S0000001,test student1,09/11/1999,COSC2441,test course1,4,2022A
+S0000001,test student1,09/11/1999,COSC2442,test course2,4,2022B
+S0000001,test student1,09/11/1999,COSC2443,test course3,4,2022C
+S0000002,test student2,09/11/1999,COSC2442,test course2,4,2022A
+S0000002,test student2,09/11/1999,COSC2443,test course3,4,2022B
+S0000002,test student2,09/11/1999,COSC2444,test course4,4,2022C
+S0000003,test student3,09/11/1999,COSC2443,test course3,4,2022A
+S0000003,test student3,09/11/1999,COSC2444,test course4,4,2022B
+S0000003,test student3,09/11/1999,COSC2445,test course5,4,2022C
+S0000004,test student4,09/11/1999,COSC2444,test course4,4,2022A
+S0000004,test student4,09/11/1999,COSC2445,test course5,4,2022B
+S0000004,test student4,09/11/1999,COSC2441,test course1,4,2022C
+S0000005,test student5,09/11/1999,COSC2445,test course5,4,2022A
+S0000005,test student5,09/11/1999,COSC2441,test course1,4,2022B
+S0000005,test student5,09/11/1999,COSC2442,test course2,4,2022C

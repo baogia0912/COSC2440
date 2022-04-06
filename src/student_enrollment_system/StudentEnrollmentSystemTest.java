@@ -2,10 +2,7 @@ package student_enrollment_system;
 
 import org.junit.jupiter.api.*;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,50 +15,52 @@ class StudentEnrollmentSystemTest {
 
     private static Path pathToFile;
     private static File file;
-    private static Student testStudent;
-    private static Course testCourse;
-    private static String testSemester;
     StudentEnrollmentSystem SES;
-    StudentEnrollment testSE;
 
     @BeforeAll
     public static void setupAll() {
         pathToFile = Paths.get("src/student_enrollment_system/csvFiles/TestingDatabase.csv");
         file = new File(pathToFile.toString());
         StudentEnrollmentSystem.databasePath = pathToFile.toString();
-
-        try {
-            testStudent = new Student("S3805912", "test student", new SimpleDateFormat("MM/dd/yyyy", Locale.ENGLISH).parse("09/11/1999"));
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        testCourse = new Course("COSC2440", "Further Programming", 4);
-        testSemester = "2022A";
     }
 
     @BeforeEach
     public void setup() {
         SES = new StudentEnrollmentSystem();
-        testSE = new StudentEnrollment(testStudent, testCourse, testSemester);
+        CSV.readEnrollmentsFromCSV("src/student_enrollment_system/csvFiles/BackupTestingDatabase.csv",
+                SES.enrollmentList, SES.courseList, SES.studentList);
+        try {
+            PrintWriter outputFile = new PrintWriter(file);
+            for (StudentEnrollment SE : SES.enrollmentList) {
+                outputFile.printf("%s,%s,%s,%s,%s,%d,%s\n",
+                        SE.getStudent().getStudentID(), SE.getStudent().getStudentName(),
+                        new SimpleDateFormat("MM/dd/yyyy").format(SE.getStudent().getBirthday()),
+                        SE.getCourse().getCourseID(), SE.getCourse().getCourseName(),
+                        SE.getCourse().getCredit(), SE.getSemester()
+                );
+            }
+            outputFile.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
     void add() {
-        SES.add(testSE);
+        SES.add(new StudentEnrollment(Student.findStudent(SES.studentList,"S0000001"),
+                Course.findCourse(SES.courseList, "COSC2444"), "2022A"));
 
-        Assertions.assertEquals(1, SES.enrollmentList.size());
+        Assertions.assertEquals(16, SES.enrollmentList.size());
         Assertions.assertFalse(SES.getAll().isEmpty());
+        String line, lastLine = "";
         try (BufferedReader br = Files.newBufferedReader(pathToFile, StandardCharsets.US_ASCII)) {
-
-            String line = br.readLine();
             Integer fileSize = 0;
-            while (line != null) {
-                Assertions.assertEquals("S3805912,test student,09/11/1999,COSC2440,Further Programming,4,2022A", line);
+            while ((line = br.readLine()) != null) {
+                lastLine = line;
                 fileSize++;
-                line = br.readLine();
             }
-
-            Assertions.assertEquals(1, fileSize);
+            Assertions.assertEquals("S0000001,test student1,09/11/1999,COSC2444,test course4,4,2022A", lastLine);
+            Assertions.assertEquals(16, fileSize);
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -70,22 +69,21 @@ class StudentEnrollmentSystemTest {
 
     @Test
     void update() {
-        SES.add(testSE);
-        Course newCourse = new Course("COSC1234", "fake course", 4);
-        SES.update(testSE, new StudentEnrollment(testStudent, newCourse, "2022B"));
+        SES.update(StudentEnrollment.findEnrollment(SES.enrollmentList, "S0000001", "COSC2441", "2022A"),
+                new StudentEnrollment(Student.findStudent(SES.studentList,"S0000001"),
+                Course.findCourse(SES.courseList, "COSC2444"), "2022A"));
 
-        Assertions.assertEquals(1, SES.enrollmentList.size());
+        Assertions.assertEquals(15, SES.enrollmentList.size());
         Assertions.assertFalse(SES.getAll().isEmpty());
+        String line, lastLine = "";
         try (BufferedReader br = Files.newBufferedReader(pathToFile, StandardCharsets.US_ASCII)) {
-
-            String line = br.readLine();
             Integer fileSize = 0;
-            while (line != null) {
-                Assertions.assertEquals("S3805912,test student,09/11/1999,COSC1234,fake course,4,2022B", line);
+            while ((line = br.readLine()) != null) {
+                lastLine = line;
                 fileSize++;
-                line = br.readLine();
             }
-            Assertions.assertEquals(1, fileSize);
+            Assertions.assertEquals("S0000001,test student1,09/11/1999,COSC2444,test course4,4,2022A", lastLine);
+            Assertions.assertEquals(15, fileSize);
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -94,21 +92,20 @@ class StudentEnrollmentSystemTest {
 
     @Test
     void delete() {
-        SES.add(testSE);
-        SES.delete(testSE);
+        SES.delete(StudentEnrollment.findEnrollment(SES.enrollmentList, "s0000001", "COSC2442", "2022B"));
 
-        Assertions.assertEquals(0, SES.enrollmentList.size());
-        Assertions.assertTrue(SES.getAll().isEmpty());
+        Assertions.assertEquals(14, SES.enrollmentList.size());
+        Assertions.assertFalse(SES.getAll().isEmpty());
+        Assertions.assertNull(StudentEnrollment.findEnrollment(SES.enrollmentList, "s0000001", "COSC2442", "2022B"));
         try (BufferedReader br = Files.newBufferedReader(pathToFile, StandardCharsets.US_ASCII)) {
 
             String line = br.readLine();
             Integer fileSize = 0;
             while (line != null) {
-                Assertions.assertEquals("", line);
                 fileSize++;
                 line = br.readLine();
             }
-            Assertions.assertEquals(0, fileSize);
+            Assertions.assertEquals(14, fileSize);
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -117,9 +114,8 @@ class StudentEnrollmentSystemTest {
 
     @Test
     void getOne() {
-        SES.add(testSE);
-        Assertions.assertEquals(testSE, SES.getOne(testStudent.getStudentID()));
-        Assertions.assertNull(SES.getOne("s3805911"));
+        Assertions.assertEquals(StudentEnrollment.findEnrollment(SES.enrollmentList, "S0000001", "COSC2441", "2022A"), SES.getOne("S0000001"));
+        Assertions.assertNull(SES.getOne("s3805912"));
     }
 
     @Test
@@ -127,33 +123,24 @@ class StudentEnrollmentSystemTest {
         Assertions.assertEquals(SES.enrollmentList, SES.getAll());
     }
 
+
     @Test
-    void isValidStudentID() {
-        Assertions.assertTrue(Validation.isValidStudentID("s3805912"));
-        Assertions.assertFalse(Validation.isValidStudentID("s38059122"));
-        Assertions.assertFalse(Validation.isValidStudentID("s38052"));
-        Assertions.assertTrue(Validation.isValidStudentID("s380591"));
-        Assertions.assertTrue(Validation.isValidStudentID("S0000000"));
+    void findCoursesOfStudent() {
+        Assertions.assertEquals("[COSC2441 - test course1(4cr)]", StudentEnrollmentSystem.findCoursesOfStudent(SES.enrollmentList, "S0000001", "2022A").toString());
+        Assertions.assertTrue(StudentEnrollmentSystem.findCoursesOfStudent(SES.enrollmentList, "S0000006", "2022A").isEmpty());
     }
 
     @Test
-    void isValidCourseID() {
-        Assertions.assertTrue(Validation.isValidCourseID("QWER5912"));
-        Assertions.assertFalse(Validation.isValidCourseID("WDAW59122"));
-        Assertions.assertFalse(Validation.isValidCourseID("WQDSS8052"));
-        Assertions.assertFalse(Validation.isValidCourseID("WS8052"));
-        Assertions.assertTrue(Validation.isValidCourseID("AQW0591"));
-        Assertions.assertTrue(Validation.isValidCourseID("ACDA0000"));
+    void findStudentsOfCourse() {
+        Assertions.assertEquals("[S0000001 - test student1(09/11/1999)]", StudentEnrollmentSystem.findStudentsOfCourse(SES.enrollmentList, "COSC2441", "2022A").toString());
+        Assertions.assertTrue(StudentEnrollmentSystem.findStudentsOfCourse(SES.enrollmentList, "COSC2440", "2022A").isEmpty());
     }
 
     @Test
-    void isValidSemester() {
-        Assertions.assertFalse(Validation.isValidSemester("4123D"));
-        Assertions.assertTrue(Validation.isValidSemester("1232c"));
-        Assertions.assertFalse(Validation.isValidSemester("123A"));
-        Assertions.assertFalse(Validation.isValidSemester("12345B"));
-        Assertions.assertTrue(Validation.isValidSemester("1234C"));
-        Assertions.assertTrue(Validation.isValidSemester("0000A"));
+    void findCourseInSemester() {
+        Assertions.assertEquals("[COSC2441 - test course1(4cr), COSC2442 - test course2(4cr), COSC2443 - test course3(4cr), COSC2444 - test course4(4cr), COSC2445 - test course5(4cr)]",
+                StudentEnrollmentSystem.findCourseInSemester(SES.enrollmentList, "2022A").toString());
+        Assertions.assertTrue(StudentEnrollmentSystem.findCourseInSemester(SES.enrollmentList, "2022D").isEmpty());
     }
 
     @AfterEach

@@ -179,8 +179,5 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
     public static void main (String[] args){
         StudentEnrollmentSystem SES = new StudentEnrollmentSystem();
         Menu.menu(SES);
-
-
     }
-
 }
