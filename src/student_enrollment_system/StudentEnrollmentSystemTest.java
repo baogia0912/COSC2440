@@ -129,31 +129,31 @@ class StudentEnrollmentSystemTest {
 
     @Test
     void isValidStudentID() {
-        Assertions.assertTrue(StudentEnrollmentSystem.isValidStudentID("s3805912"));
-        Assertions.assertFalse(StudentEnrollmentSystem.isValidStudentID("s38059122"));
-        Assertions.assertFalse(StudentEnrollmentSystem.isValidStudentID("s38052"));
-        Assertions.assertTrue(StudentEnrollmentSystem.isValidStudentID("s380591"));
-        Assertions.assertTrue(StudentEnrollmentSystem.isValidStudentID("S0000000"));
+        Assertions.assertTrue(Validation.isValidStudentID("s3805912"));
+        Assertions.assertFalse(Validation.isValidStudentID("s38059122"));
+        Assertions.assertFalse(Validation.isValidStudentID("s38052"));
+        Assertions.assertTrue(Validation.isValidStudentID("s380591"));
+        Assertions.assertTrue(Validation.isValidStudentID("S0000000"));
     }
 
     @Test
     void isValidCourseID() {
-        Assertions.assertTrue(StudentEnrollmentSystem.isValidCourseID("QWER5912"));
-        Assertions.assertFalse(StudentEnrollmentSystem.isValidCourseID("WDAW59122"));
-        Assertions.assertFalse(StudentEnrollmentSystem.isValidCourseID("WQDSS8052"));
-        Assertions.assertFalse(StudentEnrollmentSystem.isValidCourseID("WS8052"));
-        Assertions.assertTrue(StudentEnrollmentSystem.isValidCourseID("AQW0591"));
-        Assertions.assertTrue(StudentEnrollmentSystem.isValidCourseID("ACDA0000"));
+        Assertions.assertTrue(Validation.isValidCourseID("QWER5912"));
+        Assertions.assertFalse(Validation.isValidCourseID("WDAW59122"));
+        Assertions.assertFalse(Validation.isValidCourseID("WQDSS8052"));
+        Assertions.assertFalse(Validation.isValidCourseID("WS8052"));
+        Assertions.assertTrue(Validation.isValidCourseID("AQW0591"));
+        Assertions.assertTrue(Validation.isValidCourseID("ACDA0000"));
     }
 
     @Test
     void isValidSemester() {
-        Assertions.assertFalse(StudentEnrollmentSystem.isValidSemester("4123D"));
-        Assertions.assertTrue(StudentEnrollmentSystem.isValidSemester("1232c"));
-        Assertions.assertFalse(StudentEnrollmentSystem.isValidSemester("123A"));
-        Assertions.assertFalse(StudentEnrollmentSystem.isValidSemester("12345B"));
-        Assertions.assertTrue(StudentEnrollmentSystem.isValidSemester("1234C"));
-        Assertions.assertTrue(StudentEnrollmentSystem.isValidSemester("0000A"));
+        Assertions.assertFalse(Validation.isValidSemester("4123D"));
+        Assertions.assertTrue(Validation.isValidSemester("1232c"));
+        Assertions.assertFalse(Validation.isValidSemester("123A"));
+        Assertions.assertFalse(Validation.isValidSemester("12345B"));
+        Assertions.assertTrue(Validation.isValidSemester("1234C"));
+        Assertions.assertTrue(Validation.isValidSemester("0000A"));
     }
 
     @AfterEach
