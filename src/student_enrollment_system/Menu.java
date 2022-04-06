@@ -134,7 +134,7 @@ public class Menu {
                     if (!Validation.isValidStudentID(studentID) || Student.findStudent(SES.studentList, studentID) == null) {
                         System.out.println(ANSI_RED + "Invalid student ID" + ANSI_RESET);
                     } else {
-                        while (!input.equalsIgnoreCase("3")) {
+                        while (!input.equalsIgnoreCase("4")) {
                             if (errorMessage != null) {
                                 System.out.println(errorMessage);
                                 errorMessage = null;
@@ -236,7 +236,7 @@ public class Menu {
                                     }
                                 }
                                 case "4" -> {}
-                                default -> errorMessage = ANSI_RED + "Input error! Please only enter '1', '2', or '3'" + ANSI_RESET;
+                                default -> errorMessage = ANSI_RED + "Input error! Please only enter '1', '2', '3' or '4'" + ANSI_RESET;
                             }
                         }
                     }
