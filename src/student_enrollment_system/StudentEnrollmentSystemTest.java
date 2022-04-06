@@ -28,6 +28,8 @@ class StudentEnrollmentSystemTest {
         CSV.readEnrollmentsFromCSV("src/student_enrollment_system/csvFiles/BackupTestingDatabase.csv",
                 SES.enrollmentList, SES.courseList, SES.studentList);
         try {
+            FileWriter fw = new FileWriter(file,false);
+            fw.close();
             PrintWriter outputFile = new PrintWriter(file);
             for (StudentEnrollment SE : SES.enrollmentList) {
                 outputFile.printf("%s,%s,%s,%s,%s,%d,%s\n",
@@ -139,15 +141,5 @@ class StudentEnrollmentSystemTest {
         Assertions.assertEquals("[COSC2441 - test course1(4cr), COSC2442 - test course2(4cr), COSC2443 - test course3(4cr), COSC2444 - test course4(4cr), COSC2445 - test course5(4cr)]",
                 StudentEnrollmentSystem.findCourseInSemester(SES.enrollmentList, "2022A").toString());
         Assertions.assertTrue(StudentEnrollmentSystem.findCourseInSemester(SES.enrollmentList, "2022D").isEmpty());
-    }
-
-    @AfterEach
-    public void tearDown() {
-        try {
-            FileWriter fw = new FileWriter(file,false);
-            fw.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }
