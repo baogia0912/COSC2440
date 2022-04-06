@@ -1,5 +1,6 @@
 package student_enrollment_system;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -34,8 +35,8 @@ public class Menu {
             if (input.equalsIgnoreCase("y")) {
                 System.out.println(ANSI_BLUE + "Enter your path: ");
                 input = scanner.nextLine();
-                if (Validation.isValidPath(input) && input.endsWith(".csv")) {
-                    CSV.readEnrollmentsFromCSV(input, SES.enrollmentList, SES.courseList, SES.studentList);
+                if (Validation.isValidPath(input) && input.endsWith(".csv") &&
+                        CSV.readEnrollmentsFromCSV(input, SES.enrollmentList, SES.courseList, SES.studentList)) {
                     StudentEnrollmentSystem.databasePath = input;
                     while (!Arrays.asList("y", "Y", "n", "N").contains(input)) {
                         if (errorMessage != null) {
@@ -63,27 +64,22 @@ public class Menu {
                                     case "1" -> {
                                         System.out.println("Enter the path to your CSV file: ");
                                         input = scanner.nextLine();
-                                        if (Validation.isValidPath(input) && input.endsWith(".csv")) {
-                                            CSV.readStudentsFromCSV(input, SES.studentList);
-                                        } else {
+                                        if (!Validation.isValidPath(input) || !input.endsWith(".csv") || !CSV.readStudentsFromCSV(input, SES.studentList)) {
                                             errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
                                         }
                                     }
                                     case "2" -> {
                                         System.out.println("Enter the path to your CSV file: ");
                                         input = scanner.nextLine();
-                                        if (Validation.isValidPath(input) && input.endsWith(".csv")) {
-                                            CSV.readCoursesFromCSV(input, SES.courseList);
-                                        } else {
+                                        if (!Validation.isValidPath(input) || !input.endsWith(".csv") || !CSV.readCoursesFromCSV(input, SES.courseList)) {
                                             errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
                                         }
                                     }
                                     case "3" -> {
                                         System.out.println("Enter the path to your CSV file: ");
                                         input = scanner.nextLine();
-                                        if (Validation.isValidPath(input) && input.endsWith(".csv")) {
-                                            CSV.readEnrollmentsFromCSV(input, SES.enrollmentList, SES.courseList, SES.studentList);
-                                        } else {
+                                        if (!Validation.isValidPath(input) || !input.endsWith(".csv") ||
+                                                !CSV.readEnrollmentsFromCSV(input, SES.enrollmentList, SES.courseList, SES.studentList)) {
                                             errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
                                         }
                                     }
@@ -99,8 +95,7 @@ public class Menu {
                     errorMessage = ANSI_RED + "Invalid path!" + ANSI_RESET;
                 }
             } else if (input.equalsIgnoreCase("n")) {
-                CSV.readEnrollmentsFromCSV(StudentEnrollmentSystem.defaultDatabasePath, SES.enrollmentList, SES.courseList, SES.studentList);
-                StudentEnrollmentSystem.databasePath = StudentEnrollmentSystem.defaultDatabasePath;
+                CSV.readEnrollmentsFromCSV(StudentEnrollmentSystem.databasePath, SES.enrollmentList, SES.courseList, SES.studentList);
             }
             if (input.equals("4")) break;
         }
@@ -145,7 +140,13 @@ public class Menu {
                                 errorMessage = null;
                             }
                             System.out.println(ANSI_GREEN + "These are this student's enrollments" + ANSI_RESET);
-                            Print.printEnrollment(StudentEnrollmentSystem.findEnrollmentsOfStudent(SES.enrollmentList, studentID));
+                            List<StudentEnrollment> thisStudentEnrollments = new ArrayList<>();
+                            for (StudentEnrollment SE : SES.enrollmentList) {
+                                if (SE.getStudent().getStudentID().equalsIgnoreCase(studentID)) {
+                                    thisStudentEnrollments.add(SE);
+                                }
+                            }
+                            Print.printEnrollment(thisStudentEnrollments);
                             System.out.println("1: Enroll a course | 2: Drop a course | 3: Update a course | 4: Back");
                             input = scanner.nextLine();
                             switch (input) {
@@ -203,7 +204,7 @@ public class Menu {
                                         errorMessage = ANSI_RED + "Invalid semester" + ANSI_RESET;
                                         break;
                                     }
-                                    List<Course> courseAvailableForUpdate = StudentEnrollmentSystem.findCourseOfStudentInSemester(SES.enrollmentList, studentID, semester);
+                                    List<Course> courseAvailableForUpdate = StudentEnrollmentSystem.findCoursesOfStudent(SES.enrollmentList, studentID, semester);
                                     if (courseAvailableForUpdate.isEmpty()) {
                                         System.out.println(ANSI_RED + "Student does not have any course in semester " + semester + ANSI_RESET);
                                     } else {

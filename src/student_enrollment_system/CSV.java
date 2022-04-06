@@ -1,9 +1,6 @@
 package student_enrollment_system;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +14,7 @@ public class CSV {
     public static final String ANSI_YELLOW = "\u001B[33m";
     public static final String ANSI_PURPLE = "\u001B[35m";
 
-    static void readStudentsFromCSV(String fileName, List<Student> studentList) {
+    static boolean readStudentsFromCSV(String fileName, List<Student> studentList) {
         Path pathToFile = Paths.get(fileName);
 
         try (BufferedReader br = Files.newBufferedReader(pathToFile, StandardCharsets.US_ASCII)) {
@@ -29,6 +26,7 @@ public class CSV {
                     Student.createStudent(attributes, studentList);
                 } else {
                     System.out.println(ANSI_RED + "Unable to parse this line to the database: " + ANSI_YELLOW + line + ANSI_RESET);
+                    return false;
                 }
                 line = br.readLine();
             }
@@ -36,11 +34,13 @@ public class CSV {
 
         } catch (IOException ioe) {
             ioe.printStackTrace();
+            return false;
         }
+        return true;
     }
 
 
-    static void readCoursesFromCSV(String fileName, List<Course> courseList) {
+    static boolean readCoursesFromCSV(String fileName, List<Course> courseList) {
         Path pathToFile = Paths.get(fileName);
 
         try (BufferedReader br = Files.newBufferedReader(pathToFile, StandardCharsets.US_ASCII)) {
@@ -52,6 +52,7 @@ public class CSV {
                     Course.createCourse(attributes, courseList);
                 } else {
                     System.out.println(ANSI_RED + "Unable to parse this line to the database: " + ANSI_YELLOW + line + ANSI_RESET);
+                    return false;
                 }
                 line = br.readLine();
             }
@@ -59,10 +60,12 @@ public class CSV {
 
         } catch (IOException ioe) {
             ioe.printStackTrace();
+            return false;
         }
+        return true;
     }
 
-    static void readEnrollmentsFromCSV(String fileName,
+    static boolean readEnrollmentsFromCSV(String fileName,
                                        List<StudentEnrollment> enrollmentList, List<Course> courseList, List<Student> studentList) {
         Path pathToFile = Paths.get(fileName);
 
@@ -75,6 +78,7 @@ public class CSV {
                     StudentEnrollment.createEnrollment(attributes, enrollmentList, courseList, studentList);
                 } else {
                     System.out.println(ANSI_RED + "Unable to parse this line to the database: " + ANSI_YELLOW + line + ANSI_RESET);
+                    return false;
                 }
                 line = br.readLine();
             }
@@ -82,7 +86,9 @@ public class CSV {
 
         } catch (IOException ioe) {
             ioe.printStackTrace();
+            return false;
         }
+        return true;
     }
 
 
@@ -123,5 +129,19 @@ public class CSV {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void writeEnrollmentsToDatabase(List<StudentEnrollment> enrollmentList, File file) throws FileNotFoundException {
+        PrintWriter outputFile = new PrintWriter(file);
+
+        for (StudentEnrollment SE : enrollmentList) {
+            outputFile.printf("%s,%s,%s,%s,%s,%d,%s\n",
+                    SE.getStudent().getStudentID(), SE.getStudent().getStudentName(),
+                    new SimpleDateFormat("MM/dd/yyyy").format(SE.getStudent().getBirthday()),
+                    SE.getCourse().getCourseID(), SE.getCourse().getCourseName(),
+                    SE.getCourse().getCredit(), SE.getSemester()
+            );
+        }
+        outputFile.close();
     }
 }

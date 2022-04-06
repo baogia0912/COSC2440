@@ -19,7 +19,6 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
     List<Course> courseList = new ArrayList<>();
     List<Student> studentList = new ArrayList<>();
 
-    public static final String defaultDatabasePath = "src/student_enrollment_system/csvFiles/default.csv";
     public static String databasePath = "src/student_enrollment_system/csvFiles/default.csv";
 
     @Override
@@ -50,17 +49,7 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         try {
             enrollmentList.remove(oldEnrollment);
             enrollmentList.add(newEnrollment);
-            PrintWriter outputFile = new PrintWriter(file);
-
-            for (StudentEnrollment SE : enrollmentList) {
-                outputFile.printf("%s,%s,%s,%s,%s,%d,%s\n",
-                        SE.getStudent().getStudentID(), SE.getStudent().getStudentName(),
-                        new SimpleDateFormat("MM/dd/yyyy").format(SE.getStudent().getBirthday()),
-                        SE.getCourse().getCourseID(), SE.getCourse().getCourseName(),
-                        SE.getCourse().getCredit(), SE.getSemester()
-                );
-            }
-            outputFile.close();
+            CSV.writeEnrollmentsToDatabase(enrollmentList, file);
             return true;
         }
         catch (Exception e) {
@@ -74,17 +63,7 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         File file = new File(databasePath);
         try {
             enrollmentList.remove(oldSE);
-            PrintWriter outputFile = new PrintWriter(file);
-
-            for (StudentEnrollment SE : enrollmentList) {
-                outputFile.printf("%s,%s,%s,%s,%s,%d,%s\n",
-                        SE.getStudent().getStudentID(), SE.getStudent().getStudentName(),
-                        new SimpleDateFormat("MM/dd/yyyy").format(SE.getStudent().getBirthday()),
-                        SE.getCourse().getCourseID(), SE.getCourse().getCourseName(),
-                        SE.getCourse().getCredit(), SE.getSemester()
-                );
-            }
-            outputFile.close();
+            CSV.writeEnrollmentsToDatabase(enrollmentList, file);
             return true;
         }
         catch (Exception e) {
@@ -131,30 +110,10 @@ public class StudentEnrollmentSystem implements StudentEnrollmentManager {
         return queryList;
     }
 
-    public static List<StudentEnrollment> findEnrollmentsOfStudent(List<StudentEnrollment> enrollmentList, String studentID) {
-        List<StudentEnrollment> queryList = new ArrayList<>();
-        for (StudentEnrollment SE : enrollmentList) {
-            if (SE.getStudent().getStudentID().equalsIgnoreCase(studentID)) {
-                queryList.add(SE);
-            }
-        }
-        return queryList;
-    }
-
     public static List<Course> findCourseInSemester(List<StudentEnrollment> enrollmentList, String semester) {
         List<Course> queryList = new ArrayList<>();
         for (StudentEnrollment SE : enrollmentList) {
             if (SE.getSemester().equalsIgnoreCase(semester) && !queryList.contains(SE.getCourse())) {
-                queryList.add(SE.getCourse());
-            }
-        }
-        return queryList;
-    }
-
-    public static List<Course> findCourseOfStudentInSemester(List<StudentEnrollment> enrollmentList, String studentID, String semester) {
-        List<Course> queryList = new ArrayList<>();
-        for (StudentEnrollment SE : enrollmentList) {
-            if (SE.getStudent().getStudentID().equalsIgnoreCase(studentID) && SE.getSemester().equalsIgnoreCase(semester)) {
                 queryList.add(SE.getCourse());
             }
         }

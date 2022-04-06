@@ -24,9 +24,8 @@ public class Validation {
     }
 
     public static boolean isValidStudentAttr(String[] attributes) {
-        if (!isValidStudentID(attributes[0])) return false;
-
         try {
+            if (!isValidStudentID(attributes[0])) return false;
             new SimpleDateFormat("MM/dd/yyyy", Locale.ENGLISH).parse(attributes[2]);
         } catch (ParseException e) {
             return false;
@@ -38,9 +37,8 @@ public class Validation {
     }
 
     public static boolean isValidCourseAttr(String[] attributes) {
-        if (!isValidCourseID(attributes[0])) return false;
-
         try {
+            if (!isValidCourseID(attributes[0])) return false;
             Integer.parseInt(attributes[2]);
         } catch (NumberFormatException e) {
             return false;
@@ -52,8 +50,13 @@ public class Validation {
     }
 
     public static boolean isValidEnrollmentAttributes(String[] attributes) {
-        if (!isValidSemester(attributes[6])) return false;
-        if (!isValidStudentAttr(Arrays.copyOfRange(attributes, 0, 3))) return false;
-        return isValidCourseAttr(Arrays.copyOfRange(attributes, 3, 6));
+        try {
+            if (!isValidSemester(attributes[6])) return false;
+            if (!isValidStudentAttr(Arrays.copyOfRange(attributes, 0, 3))) return false;
+            if (!isValidCourseAttr(Arrays.copyOfRange(attributes, 3, 6))) return false;
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
     }
 }

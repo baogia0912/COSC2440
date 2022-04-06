@@ -48,8 +48,6 @@ public class StudentEnrollment {
 
     static void createEnrollment(String[] metadata,
                                  List<StudentEnrollment> enrollmentList, List<Course> courseList, List<Student> studentList) {
-        Student student = Student.createStudent(Arrays.copyOfRange(metadata, 0, 3), studentList);
-        Course course = Course.createCourse(Arrays.copyOfRange(metadata, 3, 6), courseList);
         String studentID = metadata[0];
         String courseID = metadata[3];
         String semester = metadata[6];
@@ -59,6 +57,8 @@ public class StudentEnrollment {
             System.out.println(ANSI_GREEN + SE + ANSI_RESET + " already exist and will not be added");
             return;
         }
+        Student student = Student.createStudent(Arrays.copyOfRange(metadata, 0, 3), studentList);
+        Course course = Course.createCourse(Arrays.copyOfRange(metadata, 3, 6), courseList);
 
         StudentEnrollment newSE = new StudentEnrollment(student, course, semester);
         enrollmentList.add(newSE);
